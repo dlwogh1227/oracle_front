@@ -9,7 +9,7 @@ import {
     DialogTitle,
     DialogDescription,
 } from "@/components/ui/dialog"
-import { Activity, FileText, ListChecks, Brain, HeartPulse, ScanLine, SquareStack } from "lucide-react";
+import { Activity, FileText, ListChecks, Brain, HeartPulse, ScanLine, SquareStack, Image, ActivitySquare, ClipboardList, ScanEye } from "lucide-react";
 
 const messages = [
     ["스마트한","건강 관리의 시작"],
@@ -168,10 +168,54 @@ export default function MainIntro() {
 
     function ProfessionalMessage() {
         return (
-            <>
-                12유도 ECG + 동맥경화도 기반으로<br />
-                뇌혈관 질환까지 예측 가능!
-            </>
+            <div className="flex flex-col md:flex-row items-center justify-center gap-12 px-6 py-6">
+                {/* 좌측: 기능 아이콘들 */}
+                <div className="grid grid-cols-2 gap-6">
+                    {/* 흉부 X-ray */}
+                    <div className="flex flex-col items-center space-y-2">
+                        <div className="bg-indigo-100 p-4 rounded-full shadow">
+                            <Image className="w-10 h-10 text-indigo-600" />
+                        </div>
+                        <span className="text-base font-medium">흉부 X-ray</span>
+                    </div>
+
+                    {/* 12유도 ECG */}
+                    <div className="flex flex-col items-center space-y-2">
+                        <div className="bg-rose-100 p-4 rounded-full shadow">
+                            <ActivitySquare className="w-10 h-10 text-rose-600" />
+                        </div>
+                        <span className="text-base font-medium">12유도 ECG</span>
+                    </div>
+
+                    {/* 건강검진 + 문진 */}
+                    <div className="flex flex-col items-center space-y-2">
+                        <div className="bg-lime-100 p-4 rounded-full shadow">
+                            <ClipboardList className="w-10 h-10 text-lime-600" />
+                        </div>
+                        <span className="text-base font-medium">건강검진 데이터</span>
+                    </div>
+
+                    {/* 뇌 MRI 세분화 */}
+                    <div className="flex flex-col items-center space-y-2">
+                        <div className="bg-cyan-100 p-4 rounded-full shadow">
+                            <ScanEye className="w-10 h-10 text-cyan-600" />
+                        </div>
+                        <span className="text-base font-medium">뇌 MRI 세분화</span>
+                    </div>
+                </div>
+
+                {/* 우측: 설명 문구 */}
+                <div className="max-w-xl text-center md:text-left space-y-4">
+                    <h3 className="text-3xl font-bold leading-snug">
+                        다중 생체신호와 이미지를 활용한<br />뇌졸중 위험도 예측 서비스
+                    </h3>
+                    <p className="text-lg text-gray-800 leading-relaxed">
+                        흉부 X-ray, 12유도 ECG, 건강검진 정보를 종합하여<br />
+                        <span className="text-purple-600 font-semibold">고유 점수체계 기반</span>으로 뇌졸중 위험도를 예측합니다.<br />
+                        추가로, 뇌 MRI 이미지를 통해 <span className="text-purple-600 font-semibold">세밀한 뇌 부위 분할</span> 결과도 확인할 수 있어요!
+                    </p>
+                </div>
+            </div>
         );
     }
 

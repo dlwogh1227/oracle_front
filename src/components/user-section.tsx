@@ -15,7 +15,9 @@ interface AnalysisResult {
         "signal": number,
         "crf": number,
         "wt": number,
-        "age": number
+        "age": number,
+        "sbp"?: number,
+        "dbp"?: number
     };
     gpt_result?: {
         "RR 간격": string,
@@ -23,7 +25,10 @@ interface AnalysisResult {
         "T파": string,
         "P파": string,
         "임상 권고": string
-    }
+    };
+    pwv_shap_prob?: number[]
+    pwv_shap_report?: string
+    pwv_shap_img_base64?: string
 }
 
 export function UserSection() {

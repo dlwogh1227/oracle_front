@@ -17,7 +17,9 @@ interface AnalysisResult {
         "signal": number,
         "crf": number,
         "wt": number,
-        "age": number
+        "age": number,
+        "sbp"?: number,
+        "dbp"?: number
     };
     gpt_result?: {
         "RR 간격": string,
@@ -25,11 +27,34 @@ interface AnalysisResult {
         "T파": string,
         "P파": string,
         "임상 권고": string
-    }
+    };
+    pwv_shap_prob?: number[]
+    pwv_shap_report?: string
+    pwv_shap_img_base64?: string
 }
 
 export default function Ecg1leadDashboard({ result }: { result: AnalysisResult }) {
     const [showHeatmap, setShowHeatmap] = useState(false);
+
+    const report = result.pwv_shap_report ?? "";
+
+    const splitKey = "권장드립니다.";
+    const splitIndex = report.indexOf(splitKey);
+
+    let part1 = "";
+    let part2 = "";
+
+    if (splitIndex !== -1) {
+        // part1: 권장드립니다.까지 포함
+        part1 = report.slice(23, splitIndex + splitKey.length).trim();
+
+        // part2: 이후 내용
+        part2 = report.slice(splitIndex + splitKey.length).trim();
+    } else {
+        // 권장 문장이 없으면 전체를 part1로
+        part1 = report.trim();
+        part2 = "";
+    }
 
     const chartData = result.ecg_signal.map(d => ({
         time: d["Time (s)"],
@@ -148,10 +173,16 @@ export default function Ecg1leadDashboard({ result }: { result: AnalysisResult }
                                 />
                                 <Pie
                                     data={[
-                                        { name: "ECG image", value: Math.round(result.feature_importance.image) , fill: "#facc15" },
-                                        { name: "ECG signal", value: Math.round(result.feature_importance.signal), fill: "#4ade80" },
-                                        { name: "wt", value: Math.round(result.feature_importance.wt), fill: "#60a5fa" },
-                                        { name: "age", value: Math.round(result.feature_importance.age), fill: "#c084fc" },
+                                        { name: "ECG image", value: Math.round(result.feature_importance.image * 10)/10, fill: "#facc15" },
+                                        { name: "ECG signal", value: Math.round(result.feature_importance.signal * 10)/10, fill: "#4ade80" },
+                                        { name: "wt", value: Math.round(result.feature_importance.wt * 10)/10, fill: "#60a5fa" },
+                                        { name: "age", value: Math.round(result.feature_importance.age * 10)/10, fill: "#c084fc" },
+                                        ...(result.feature_importance.sbp !== undefined
+                                            ? [{ name: "sbp", value: Math.round(result.feature_importance.sbp * 10)/10, fill: "#f97316" }]
+                                            : []),
+                                        ...(result.feature_importance.dbp !== undefined
+                                            ? [{ name: "dbp", value: Math.round(result.feature_importance.dbp * 10)/10, fill: "#38bdf8" }]
+                                            : []),
                                     ]}
                                     dataKey="value"
                                     cx="50%"
@@ -171,7 +202,7 @@ export default function Ecg1leadDashboard({ result }: { result: AnalysisResult }
                             </PieChart>
                         </ChartContainer>
                         <div className="mb-2 text-red-400">
-                            ※ 해당 결과는 심전도 이미지와 신호 데이터, 문진 결과가 각각 {result.feature_importance.image.toFixed(0)}%, {result.feature_importance.signal.toFixed(0)}%, {result.feature_importance.crf.toFixed(0)}%의 중요도를 갖고 모델에 반영된 결과입니다.
+                            ※ 해당 결과는 심전도 이미지와 신호 데이터, 문진 결과가 각각 {Math.round(result.feature_importance.image * 10)/10}%, {Math.round(result.feature_importance.signal * 10)/10}%, {Math.round(result.feature_importance.crf * 10)/10}%의 중요도를 갖고 모델에 반영된 결과입니다.
                         </div>
                     </CardContent>
                 </Card>
@@ -207,7 +238,7 @@ export default function Ecg1leadDashboard({ result }: { result: AnalysisResult }
                             <CardTitle className="text-xl lg:text-2xl font-bold">임상 권고</CardTitle>
                         </CardHeader>
                         <CardContent className="max-w-full text-sm space-y-1">
-                            <div className="font-medium">
+                            <div className="w-full lg:flex-1 font-medium whitespace-pre-line">
                                 {result.gpt_result?.["임상 권고"] ?? "내용없음"}
                             </div>
                         </CardContent>
@@ -243,29 +274,41 @@ export default function Ecg1leadDashboard({ result }: { result: AnalysisResult }
                 </Card>
             </div>
 
-            <div className="w-full max-w-6xl flex flex-col lg:flex-row gap-4 mt-4">
-                <Card className="flex-1">
-                    <CardHeader className="text-xl lg:text-2xl font-bold">
-                        <CardTitle>추가 정보</CardTitle>
-                    </CardHeader>
-                    <CardContent className="text-sm space-y-1">
-                        <div className="font-medium">
-                            여기에 원하는 정보를 표시할 수 있습니다.
+            {result.pwv_shap_report && result.pwv_shap_img_base64 && result.pwv_shap_prob && (
+                <Card className="w-full max-w-6xl mt-4 overflow-visible">
+                    <CardHeader>
+                        <div className="flex items-center justify-start gap-4 relative">
+                            <CardTitle className="text-xl lg:text-2xl font-bold">💡혈관 건강 고위험 예측 분석 리포트</CardTitle>
+
+                            {/* 🔍 SHAP 해석 툴팁 */}
+                            <div className="group inline-block relative">
+                                <Button variant="outline" className="text-sm px-3 py-1.5">
+                                    SHAP 그래프 보기
+                                </Button>
+
+                                {/* 🖼 툴팁 이미지 (더 큼 + overflow 해제) */}
+                                <div className="absolute bottom-full left-0 mt-2 hidden group-hover:block z-50">
+                                    <img
+                                        src={`data:image/png;base64,${result.pwv_shap_img_base64}`}
+                                        alt="SHAP 해석"
+                                        className="w-[600px] max-w-none h-auto rounded-md shadow-xl border border-gray-300 bg-white"
+                                    />
+                                </div>
+                            </div>
                         </div>
+                    </CardHeader>
+
+                    <CardContent className="text-sm space-y-4">
+                        <p className="font-medium whitespace-pre-line">
+                            혈관 건강 저위험 확률: <span className="text-green-600 font-bold">{result.pwv_shap_prob[0].toFixed(4)}</span><br />
+                            혈관 건강 고위험 확률: <span className="text-red-600 font-bold">{result.pwv_shap_prob[1].toFixed(4)}</span>
+                        </p>
+                        <p className="font-medium whitespace-pre-line">{part2}</p>
+                        <p className="font-medium whitespace-pre-line text-red-400">※{part1}</p>
                     </CardContent>
                 </Card>
 
-                <Card className="flex-1">
-                    <CardHeader className="text-xl lg:text-2xl font-bold">
-                        <CardTitle>예시 카드</CardTitle>
-                    </CardHeader>
-                    <CardContent className="text-sm space-y-1">
-                        <div className="font-medium">
-                            다른 분석 결과나 추가 안내를 제공할 수 있어요.
-                        </div>
-                    </CardContent>
-                </Card>
-            </div>
+            )}
         </div>
     );
 }
