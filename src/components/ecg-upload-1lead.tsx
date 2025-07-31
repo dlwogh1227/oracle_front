@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button"
 
 interface AnalysisResult {
     label: number
+    more_info: number[]
     probability: number
     ecg_signal: {
         "Time (s)": number

@@ -9,6 +9,7 @@ import {ChartContainer, ChartTooltip, ChartTooltipContent,} from "@/components/u
 
 interface AnalysisResult {
     label: number;
+    more_info: number[]
     probability: number;
     ecg_signal: { "Time (s)": number; "Voltage (mV)": number }[];
     heatmap: string;
@@ -151,10 +152,12 @@ export default function Ecg1leadDashboard({ result }: { result: AnalysisResult }
                     <CardContent className="text-sm space-y-3">
                         {/* 🟢 Text Section */}
                         <div className="mb-2 font-medium">
-                            판정 결과: {result.label === 1 ? "이상 (Abnormal)" : "정상 (Normal)"}
-                        </div>
-                        <div className="mb-4 font-medium">
+                            판정 결과: {result.label === 1 ? "이상 (Abnormal)" : "정상 (Normal)"}<br/>
                             모델 예측 확률: {(result.probability * 100).toFixed(1)}%
+                        </div>
+                        <div className="mb-1 font-medium">
+                            {result.more_info[0] === 1? "부정맥이 의심됩니다":"부정맥 의심 징후는 없습니다"} <br/>
+                            {result.more_info[1] === 1? "심방세동이 의심됩니다":"심방세동 의심 징후는 없습니다"}
                         </div>
 
                         {/* 🟠 Pie Chart Section */}
@@ -165,7 +168,7 @@ export default function Ecg1leadDashboard({ result }: { result: AnalysisResult }
                                 wt: { label: "wt", color: "var(--chart-3)" },
                                 age: { label: "age", color: "var(--chart-3)" },
                             }}
-                            className="mb-4 [&_.recharts-text]:fill-background mx-auto aspect-square max-h-[250px]"
+                            className="mb-2 [&_.recharts-text]:fill-background mx-auto aspect-square max-h-[250px]"
                         >
                             <PieChart>
                                 <ChartTooltip

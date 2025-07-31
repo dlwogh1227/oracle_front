@@ -4,6 +4,7 @@ import { useState } from "react"
 
 interface AnalysisResult {
     label: number
+    more_info: number[]
     probability: number
     ecg_signal: {
         "Time (s)": number
